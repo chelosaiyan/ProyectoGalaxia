@@ -151,8 +151,55 @@ string consultarAPI(const string& url) {
 // Funcion: cargarGalaxias
 // Consulta el endpoint /galaxias, parsea el JSON y llama a insertarVertice por cada galaxia.
 
-void insertarVertice(const string& id, const string& codigo, const string& nombre, const string& tipo, float x, float y, float z, const string& descripcion);
-
+// Funcion: buscarVertice
+// Busca una galaxia en el grafo por su id. Retorna nullptr si no se encuentra.
+Vertice* buscarVertice(const string& id) {
+    Vertice* actual = grafo;
+    while (actual != nullptr) {
+        if (actual->id == id) return actual;
+        actual = actual->sigV;
+    }
+    return nullptr;
+}
+ 
+// Funcion: buscarVerticePorCodigo
+// Busca una galaxia en el grafo por su codigo. Retorna nullptr si no se encuentra.
+Vertice* buscarVerticePorCodigo(const string& codigo) {
+    Vertice* actual = grafo;
+    while (actual != nullptr) {
+        if (actual->codigo == codigo) return actual;
+        actual = actual->sigV;
+    }
+    return nullptr;
+}
+ 
+// Funcion: insertarVertice
+// Crea una nueva galaxia y la agrega al inicio de la lista enlazada del grafo.
+// Valida que no exista ya otra galaxia con el mismo id o el mismo codigo.
+void insertarVertice(const string& id, const string& codigo, const string& nombre, const string& tipo, float x, float y, float z, const string& descripcion) {
+    if (buscarVertice(id) != nullptr) {
+        cout << "Aviso: la galaxia con id '" << id << "' ya estaba registrada. No se duplico." << endl;
+        return;
+    }
+    if (buscarVerticePorCodigo(codigo) != nullptr) {
+        cout << "Aviso: ya existe una galaxia con el codigo '" << codigo << "'. No se duplico." << endl;
+        return;
+    }
+ 
+    Vertice* nuevo = new Vertice;
+    nuevo->id = id;
+    nuevo->codigo = codigo;
+    nuevo->nombre = nombre;
+    nuevo->tipo = tipo;
+    nuevo->x = x;
+    nuevo->y = y;
+    nuevo->z = z;
+    nuevo->descripcion = descripcion;
+    nuevo->subListaArcos = nullptr;
+    nuevo->sigV = grafo;
+    grafo = nuevo;
+}
+ 
 void cargarGalaxias() {
     cout << "Cargando galaxias." << endl;
     string texto = consultarAPI("https://galaxias-mock-api.onrender.com/galaxias");
@@ -172,10 +219,43 @@ void cargarGalaxias() {
     }
     cout << "Galaxias cargadas correctamente." << endl;
 }
+
  
 // Funcion: cargarRutas
 // Consulta el endpoint /rutas, parsea el JSON y llama a insertarArco por cada ruta.
-void insertarArco(const string& origen_id, const string& id, const string& destino_id, const string& tipo, float costo, float tiempo_dias, bool activa);
+// Funcion: insertarArco
+// Busca la galaxia origen y le agrega un nuevo arco (ruta) al inicio de su sublista de arcos.
+// Valida que no exista ya una ruta con el mismo id en esa sublista.
+void insertarArco(const string& origen_id, const string& id, const string& destino_id, const string& tipo, float costo, float tiempo_dias, bool activa) {
+    Vertice* origen = buscarVertice(origen_id);
+    if (origen == nullptr) {
+        cout << "Error: no existe la galaxia origen con id '" << origen_id << "'. No se pudo registrar la ruta '" << id << "'." << endl;
+        return;
+    }
+ 
+    Arco* recorre = origen->subListaArcos;
+    while (recorre != nullptr) {
+        if (recorre->id == id) {
+            cout << "Aviso: la ruta con id '" << id << "' ya estaba registrada. No se duplico." << endl;
+            return;
+        }
+        recorre = recorre->sigA;
+    }
+ 
+    if (buscarVertice(destino_id) == nullptr) {
+        cout << "Aviso: la ruta '" << id << "' apunta a un destino ('" << destino_id << "') que no existe en el grafo." << endl;
+    }
+ 
+    Arco* nuevo = new Arco;
+    nuevo->id = id;
+    nuevo->destino_id = destino_id;
+    nuevo->tipo = tipo;
+    nuevo->costo = costo;
+    nuevo->tiempo_dias = tiempo_dias;
+    nuevo->activa = activa;
+    nuevo->sigA = origen->subListaArcos;
+    origen->subListaArcos = nuevo;
+}
  
 void cargarRutas() {
     cout << "Cargando rutas." << endl;
@@ -198,10 +278,55 @@ void cargarRutas() {
 }
  
 
-// Funcion: cargarNaves
-// Consulta el endpoint /naves, parsea el JSON y llama a insertarNave por cada nave.
-void insertarNave(const string& id, const string& codigo, const string& nombre, int capacidad, int velocidad_max, bool activa);
+
+// Funcion: buscarNave
+// Busca una nave en la lista por su id. Retorna nullptr si no se encuentra.
+Nave* buscarNave(const string& id) {
+    Nave* actual = naves;
+    while (actual != nullptr) {
+        if (actual->id == id) return actual;
+        actual = actual->sigN;
+    }
+    return nullptr;
+}
  
+// Funcion: buscarNavePorCodigo
+// Busca una nave en la lista por su codigo. Retorna nullptr si no se encuentra.
+Nave* buscarNavePorCodigo(const string& codigo) {
+    Nave* actual = naves;
+    while (actual != nullptr) {
+        if (actual->codigo == codigo) return actual;
+        actual = actual->sigN;
+    }
+    return nullptr;
+}
+ 
+// Funcion: insertarNave
+// Crea una nueva nave y la agrega al inicio de la lista enlazada de naves.
+// Valida que no exista ya otra nave con el mismo id o el mismo codigo.
+void insertarNave(const string& id, const string& codigo, const string& nombre, int capacidad, int velocidad_max, bool activa) {
+    if (buscarNave(id) != nullptr) {
+        cout << "Aviso: la nave con id '" << id << "' ya estaba registrada. No se duplico." << endl;
+        return;
+    }
+    if (buscarNavePorCodigo(codigo) != nullptr) {
+        cout << "Aviso: ya existe una nave con el codigo '" << codigo << "'. No se duplico." << endl;
+        return;
+    }
+ 
+    Nave* nueva = new Nave;
+    nueva->id = id;
+    nueva->codigo = codigo;
+    nueva->nombre = nombre;
+    nueva->capacidad = capacidad;
+    nueva->velocidad_max = velocidad_max;
+    nueva->activa = activa;
+    nueva->sigN = naves;
+    naves = nueva;
+}
+
+// Funcion: cargarNaves
+// Consulta el endpoint /naves, parsea el JSON y llama a insertarNave por cada nave. 
 void cargarNaves() {
     cout << "Cargando naves." << endl;
     string texto = consultarAPI("https://galaxias-mock-api.onrender.com/naves");
@@ -222,11 +347,45 @@ void cargarNaves() {
     cout << "Naves cargadas correctamente." << endl;
 }
  
+
+// Funcion: buscarViaje
+// Busca un viaje en el historial por su id. Retorna nullptr si no se encuentra.
+Viaje* buscarViaje(const string& id) {
+    Viaje* actual = viajes;
+    while (actual != nullptr) {
+        if (actual->id == id) return actual;
+        actual = actual->sigVj;
+    }
+    return nullptr;
+}
+ 
+// Funcion: insertarViaje
+// Crea un nuevo viaje y lo agrega al inicio de la lista enlazada del historial.
+// Valida que no exista ya un viaje con el mismo id.
+void insertarViaje(const string& id, const string& nave_id, const string& origen_id, const string& destino_id, const string& fecha) {
+    if (buscarViaje(id) != nullptr) {
+        cout << "Aviso: el viaje con id '" << id << "' ya estaba registrado. No se duplico." << endl;
+        return;
+    }
+    if (buscarNave(nave_id) == nullptr) {
+        cout << "Aviso: el viaje '" << id << "' referencia una nave ('" << nave_id << "') que no existe." << endl;
+    }
+    if (buscarVertice(origen_id) == nullptr || buscarVertice(destino_id) == nullptr) {
+        cout << "Aviso: el viaje '" << id << "' referencia una galaxia de origen o destino que no existe." << endl;
+    }
+ 
+    Viaje* nuevo = new Viaje;
+    nuevo->id = id;
+    nuevo->nave_id = nave_id;
+    nuevo->origen_id = origen_id;
+    nuevo->destino_id = destino_id;
+    nuevo->fecha = fecha;
+    nuevo->sigVj = viajes;
+    viajes = nuevo;
+}
+
 // Funcion: cargarViajes
 // Descripcion: Consulta el endpoint /historial, parsea el JSON y llama a insertarViaje por cada viaje.
-
-void insertarViaje(const string& id, const string& nave_id, const string& origen_id, const string& destino_id, const string& fecha);
- 
 void cargarViajes() {
     cout << "Cargando historial de viajes." << endl;
     string texto = consultarAPI("https://galaxias-mock-api.onrender.com/historial");
@@ -258,10 +417,6 @@ void cargarDatosIniciales() {
     cargarViajes();
     cout << " Datos cargados exitosamente. " << endl;
 }
-
-
-
-
 
 //Menu
 int main() {
