@@ -256,7 +256,10 @@ void insertarArco(const string& origen_id, const string& id, const string& desti
     nuevo->sigA = origen->subListaArcos;
     origen->subListaArcos = nuevo;
 }
- 
+
+
+// Funcion: cargarRutas
+// Consulta el endpoint /rutas, parsea el JSON y llama a insertarArco por cada ruta.
 void cargarRutas() {
     cout << "Cargando rutas." << endl;
     string texto = consultarAPI("https://galaxias-mock-api.onrender.com/rutas");
@@ -416,6 +419,47 @@ void cargarDatosIniciales() {
     cargarNaves();
     cargarViajes();
     cout << " Datos cargados exitosamente. " << endl;
+}
+
+//Representacion del Grafo
+
+
+// Funcion: mostrarGrafo
+// Recorre la lista enlazada de galaxias (grafo) y, para cada una, recorre su
+// sublista de arcos (subListaArcos) mostrando las rutas que salen de ella.
+// Sirve para comprobar que la lista de adyacencia quedo bien construida.
+void mostrarGrafo() {
+    if (grafo == nullptr) {
+        cout << "El grafo esta vacio. No hay galaxias cargadas." << endl;
+        return;
+    }
+
+    Vertice* actual = grafo;
+    while (actual != nullptr) {
+        cout << "\nGalaxia: " << actual->nombre << " (codigo: " << actual->codigo << ", id: " << actual->id << ")" << endl;
+        cout << "  Tipo: " << actual->tipo << " | Coordenadas: (" << actual->x << ", " << actual->y << ", " << actual->z << ")" << endl;
+
+        if (actual->subListaArcos == nullptr) {
+            cout << "  No tiene rutas salientes registradas." << endl;
+        } else {
+            cout << "  Rutas salientes:" << endl;
+            Arco* arco = actual->subListaArcos;
+            while (arco != nullptr) {
+                Vertice* destino = buscarVertice(arco->destino_id);
+                string nombreDestino = (destino != nullptr) ? destino->nombre : "desconocido";
+
+                cout << "    -> " << nombreDestino << " (" << arco->destino_id << ")"
+                     << " | tipo: " << arco->tipo
+                     << " | costo: " << arco->costo
+                     << " | tiempo: " << arco->tiempo_dias << " dias"
+                     << " | activa: " << (arco->activa ? "si" : "no") << endl;
+
+                arco = arco->sigA;
+            }
+        }
+
+        actual = actual->sigV;
+    }
 }
 
 //Menu
