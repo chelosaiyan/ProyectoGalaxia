@@ -67,8 +67,9 @@ struct AristaKruskal {
     string origen_id;
     string destino_id;
     float costo;
+    AristaKruskal* siguiente;
 //Constructor para inicializar los campos de la arista.
-    AristaKruskal(string o, string d, float c) : origen_id(o), destino_id(d), costo(c) {}
+    AristaKruskal(string o, string d, float c) : origen_id(o), destino_id(d), costo(c), siguiente(nullptr) {}
 };
 
 // Estructura: EncontrarUnion
@@ -106,11 +107,12 @@ struct EncontrarUnion {
 Vertice* grafo = nullptr; // lista enlazada de galaxias (vertices del grafo)
 Nave* naves = nullptr; // lista enlazada de naves
 Viaje* viajes = nullptr; // lista enlazada de viajes
+AristaKruskal* aristasKruskal = nullptr; // lista enlazada de aristas recibidas de /grafo/kruskal
+AristaKruskal* arbolKruskal = nullptr; // lista enlazada con el arbol de expansion resultante
 
 
 
 //API y JSON
-
 
 // Funcion: escribirRespuesta
 // Callback interno de curl. Cada vez que llegan datos del servidor, esta funcion los acumula en el string "salida". 
@@ -148,8 +150,6 @@ string consultarAPI(const string& url) {
     return respuesta;
 }
  
-// Funcion: cargarGalaxias
-// Consulta el endpoint /galaxias, parsea el JSON y llama a insertarVertice por cada galaxia.
 
 // Funcion: buscarVertice
 // Busca una galaxia en el grafo por su id. Retorna nullptr si no se encuentra.
@@ -199,7 +199,8 @@ void insertarVertice(const string& id, const string& codigo, const string& nombr
     nuevo->sigV = grafo;
     grafo = nuevo;
 }
- 
+// Funcion: cargarGalaxias
+// Consulta el endpoint /galaxias, parsea el JSON y llama a insertarVertice por cada galaxia.
 void cargarGalaxias() {
     cout << "Cargando galaxias." << endl;
     string texto = consultarAPI("https://galaxias-mock-api.onrender.com/galaxias");
@@ -221,8 +222,7 @@ void cargarGalaxias() {
 }
 
  
-// Funcion: cargarRutas
-// Consulta el endpoint /rutas, parsea el JSON y llama a insertarArco por cada ruta.
+
 // Funcion: insertarArco
 // Busca la galaxia origen y le agrega un nuevo arco (ruta) al inicio de su sublista de arcos.
 // Valida que no exista ya una ruta con el mismo id en esa sublista.
@@ -462,16 +462,114 @@ void mostrarGrafo() {
     }
 }
 
+//Kruskal Modificado
+
+
+// Funcion: insertarAristaKruskal
+// Agrega una arista (origen, destino, costo) al inicio de la lista enlazada indicada.
+// Se reutiliza tanto para la lista que llega de la API como para el arbol resultante.
+void insertarAristaKruskal(AristaKruskal*& lista, const string& origen_id, const string& destino_id, float costo) {
+    AristaKruskal* nueva = new AristaKruskal(origen_id, destino_id, costo);
+    nueva->siguiente = lista;
+    lista = nueva;
+}
+
+// Funcion: cargarAristasKruskal
+// Consulta el endpoint /grafo/kruskal, que ya entrega las aristas en orden aleatorio,
+// y las guarda en la lista enlazada aristasKruskal sin ordenarlas (asi lo pide el enunciado).
+void cargarAristasKruskal() {
+    cout << "Cargando aristas para Kruskal." << endl;
+    string texto = consultarAPI("https://galaxias-mock-api.onrender.com/grafo/kruskal");
+    if (texto.empty()) {
+        cout << "Error: No se recibieron aristas para Kruskal." << endl;
+        return;
+    }
+
+    json datos = json::parse(texto, nullptr, false);
+    if (datos.is_discarded()) {
+        cout << "Error: El JSON de Kruskal no es valido." << endl;
+        return;
+    }
+
+    for (auto& item : datos) {
+        insertarAristaKruskal(aristasKruskal, item["origen_id"], item["destino_id"], item["costo"]);
+    }
+    cout << "Aristas de Kruskal cargadas correctamente." << endl;
+}
+
+// Funcion: kruskalModificado
+// Recorre las aristas en el orden en que llegaron (aleatorio, sin ordenar por peso) y
+// va agregando al arbol resultante solo las que no generan ciclos, usando EncontrarUnion
+// para saber si dos galaxias ya estan en el mismo conjunto/componente.
+void kruskalModificado() {
+    if (grafo == nullptr) {
+        cout << "No hay galaxias cargadas. Carga el grafo antes de ejecutar Kruskal." << endl;
+        return;
+    }
+    if (aristasKruskal == nullptr) {
+        cout << "No hay aristas cargadas para Kruskal. Carga las aristas antes de continuar." << endl;
+        return;
+    }
+
+    // Si ya existia un arbol de una corrida anterior, se libera antes de recalcular.
+    while (arbolKruskal != nullptr) {
+        AristaKruskal* temp = arbolKruskal;
+        arbolKruskal = arbolKruskal->siguiente;
+        delete temp;
+    }
+
+    EncontrarUnion conjuntos;
+    for (Vertice* v = grafo; v != nullptr; v = v->sigV) {
+        conjuntos.hacerConjunto(v->id);
+    }
+
+    AristaKruskal* actual = aristasKruskal;
+    while (actual != nullptr) {
+        if (conjuntos.encontrar(actual->origen_id) != conjuntos.encontrar(actual->destino_id)) {
+            insertarAristaKruskal(arbolKruskal, actual->origen_id, actual->destino_id, actual->costo);
+            conjuntos.unir(actual->origen_id, actual->destino_id);
+        }
+        actual = actual->siguiente;
+    }
+
+    cout << "Arbol de expansion (Kruskal modificado) generado correctamente." << endl;
+}
+
+// Funcion: mostrarArbolKruskal
+// Muestra las aristas que forman el arbol de expansion resultante de kruskalModificado,junto con el costo total de la red galactica optimizada.
+void mostrarArbolKruskal() {
+    if (arbolKruskal == nullptr) {
+        cout << "Aun no se ha generado el arbol de Kruskal. Ejecuta esa opcion primero." << endl;
+        return;
+    }
+
+    cout << "\nArbol de conexionesKruskal modificado):" << endl;
+    float costoTotal = 0;
+    AristaKruskal* actual = arbolKruskal;
+    while (actual != nullptr) {
+        Vertice* origen = buscarVertice(actual->origen_id);
+        Vertice* destino = buscarVertice(actual->destino_id);
+        string nombreOrigen = (origen != nullptr) ? origen->nombre : actual->origen_id;
+        string nombreDestino = (destino != nullptr) ? destino->nombre : actual->destino_id;
+
+        cout << "  " << nombreOrigen << " -- " << nombreDestino << "  (costo: " << actual->costo << ")" << endl;
+        costoTotal += actual->costo;
+        actual = actual->siguiente;
+    }
+    cout << "Costo total del arbol: " << costoTotal << endl;
+}
+
 //Menu
 int main() {
     int opcion;
+    cargarDatosIniciales();
 
     do {
         cout << "\n===== GUARDIANES DE LA GALAXIA =====" << endl;
         cout << "1. Galaxias" << endl;
-        cout << "2. Naves" << endl;
+        cout << "2. Navaes" << endl;
         cout << "3. Rutas" << endl;
-        cout << "4. Historial de viajes" << endl;
+        cout << "4. Historial de viajes"<< endl;
         cout << "5. Consultas" << endl;
         cout << "6. Reportes" << endl;
         cout << "0. Salir" << endl;
