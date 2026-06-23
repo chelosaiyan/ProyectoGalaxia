@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -18,7 +17,7 @@ using json = nlohmann::json;
 struct Arco {
     string id;
     string destino_id;
-    string tipo; // "subespacio","convencional", "hiperespacio"
+    string tipo; 
     float costo;
     float tiempo_dias;
     bool activa;
@@ -31,7 +30,7 @@ struct Vertice {
     string id;
     string codigo;
     string nombre;
-    string  tipo;  // "eliptica", "espiral"
+    string tipo;  
     float x, y, z;
     string descripcion;
     Arco* subListaArcos; 
@@ -67,16 +66,17 @@ struct AristaKruskal {
     string origen_id;
     string destino_id;
     float costo;
-    AristaKruskal* siguiente;
-//Constructor para inicializar los campos de la arista.
-    AristaKruskal(string o, string d, float c) : origen_id(o), destino_id(d), costo(c), siguiente(nullptr) {}
+
+    //Constructor para inicializar los campos de la arista.
+    AristaKruskal(string o, string d, float c) : origen_id(o), destino_id(d), costo(c) {}
 };
 
 // Estructura: EncontrarUnion
 //Estructura usada por Kruskal y permite unir conjuntos y encontrar la raiz de cada uno.
+
 struct EncontrarUnion {
     unordered_map<string, string> padre;
-    unordered_map<string, int>    rango;
+    unordered_map<string, int> rango;
 
     void hacerConjunto(const string& v) {
         padre[v] = v;
@@ -107,10 +107,6 @@ struct EncontrarUnion {
 Vertice* grafo = nullptr; // lista enlazada de galaxias (vertices del grafo)
 Nave* naves = nullptr; // lista enlazada de naves
 Viaje* viajes = nullptr; // lista enlazada de viajes
-AristaKruskal* aristasKruskal = nullptr; // lista enlazada de aristas recibidas de /grafo/kruskal
-AristaKruskal* arbolKruskal = nullptr; // lista enlazada con el arbol de expansion resultante
-
-
 
 //API y JSON
 
@@ -126,7 +122,7 @@ size_t escribirRespuesta(void* contenido, size_t tam, size_t n, string* salida) 
 // Hace una peticion GET a la URL indicada y retorna toda la respuesta como string de texto.
 
 string consultarAPI(const string& url) {
-    CURL*  curl = curl_easy_init();
+    CURL* curl = curl_easy_init();
     string respuesta = "";
  
     if (!curl) {
@@ -137,7 +133,9 @@ string consultarAPI(const string& url) {
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, escribirRespuesta);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respuesta);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
  
     CURLcode resultado = curl_easy_perform(curl);
  
@@ -176,13 +174,14 @@ Vertice* buscarVerticePorCodigo(const string& codigo) {
 // Funcion: insertarVertice
 // Crea una nueva galaxia y la agrega al inicio de la lista enlazada del grafo.
 // Valida que no exista ya otra galaxia con el mismo id o el mismo codigo.
+
 void insertarVertice(const string& id, const string& codigo, const string& nombre, const string& tipo, float x, float y, float z, const string& descripcion) {
     if (buscarVertice(id) != nullptr) {
-        cout << "Aviso: la galaxia con id '" << id << "' ya estaba registrada. No se duplico." << endl;
+        cout << "La galaxia con id '" << id << "' ya estaba registrada. No se duplico." << endl;
         return;
     }
     if (buscarVerticePorCodigo(codigo) != nullptr) {
-        cout << "Aviso: ya existe una galaxia con el codigo '" << codigo << "'. No se duplico." << endl;
+        cout << "La galaxia con codigo '" << codigo << "' ya estaba registrada. No se duplico." << endl;
         return;
     }
  
@@ -201,6 +200,7 @@ void insertarVertice(const string& id, const string& codigo, const string& nombr
 }
 // Funcion: cargarGalaxias
 // Consulta el endpoint /galaxias, parsea el JSON y llama a insertarVertice por cada galaxia.
+
 void cargarGalaxias() {
     cout << "Cargando galaxias." << endl;
     string texto = consultarAPI("https://galaxias-mock-api.onrender.com/galaxias");
@@ -226,24 +226,25 @@ void cargarGalaxias() {
 // Funcion: insertarArco
 // Busca la galaxia origen y le agrega un nuevo arco (ruta) al inicio de su sublista de arcos.
 // Valida que no exista ya una ruta con el mismo id en esa sublista.
+
 void insertarArco(const string& origen_id, const string& id, const string& destino_id, const string& tipo, float costo, float tiempo_dias, bool activa) {
     Vertice* origen = buscarVertice(origen_id);
     if (origen == nullptr) {
-        cout << "Error: no existe la galaxia origen con id '" << origen_id << "'. No se pudo registrar la ruta '" << id << "'." << endl;
+        cout << "Error: no existe la galaxia origen con id '" << origen_id << "'. No se pudo registrar la ruta '" << id << endl;
         return;
     }
  
     Arco* recorre = origen->subListaArcos;
     while (recorre != nullptr) {
         if (recorre->id == id) {
-            cout << "Aviso: la ruta con id '" << id << "' ya estaba registrada. No se duplico." << endl;
+            cout << "La ruta con id '" << id << "' ya estaba registrada. No se duplico." << endl;
             return;
         }
         recorre = recorre->sigA;
     }
  
     if (buscarVertice(destino_id) == nullptr) {
-        cout << "Aviso: la ruta '" << id << "' apunta a un destino ('" << destino_id << "') que no existe en el grafo." << endl;
+        cout << "La ruta '" << id << "' apunta a un destino ('" << destino_id << "') que no existe en el grafo." << endl;
     }
  
     Arco* nuevo = new Arco;
@@ -309,11 +310,11 @@ Nave* buscarNavePorCodigo(const string& codigo) {
 // Valida que no exista ya otra nave con el mismo id o el mismo codigo.
 void insertarNave(const string& id, const string& codigo, const string& nombre, int capacidad, int velocidad_max, bool activa) {
     if (buscarNave(id) != nullptr) {
-        cout << "Aviso: la nave con id '" << id << "' ya estaba registrada. No se duplico." << endl;
+        cout << "La nave con id '" << id << "' ya estaba registrada. No se duplico." << endl;
         return;
     }
     if (buscarNavePorCodigo(codigo) != nullptr) {
-        cout << "Aviso: ya existe una nave con el codigo '" << codigo << "'. No se duplico." << endl;
+        cout << "La nave con codigo '" << codigo << "' ya estaba registrada. No se duplico." << endl;
         return;
     }
  
@@ -330,8 +331,9 @@ void insertarNave(const string& id, const string& codigo, const string& nombre, 
 
 // Funcion: cargarNaves
 // Consulta el endpoint /naves, parsea el JSON y llama a insertarNave por cada nave. 
+
 void cargarNaves() {
-    cout << "Cargando naves." << endl;
+    cout << "Cargando naves" << endl;
     string texto = consultarAPI("https://galaxias-mock-api.onrender.com/naves");
     if (texto.empty()) {
         cout << "Error: No se recibieron naves." << endl;
@@ -353,6 +355,7 @@ void cargarNaves() {
 
 // Funcion: buscarViaje
 // Busca un viaje en el historial por su id. Retorna nullptr si no se encuentra.
+
 Viaje* buscarViaje(const string& id) {
     Viaje* actual = viajes;
     while (actual != nullptr) {
@@ -367,14 +370,14 @@ Viaje* buscarViaje(const string& id) {
 // Valida que no exista ya un viaje con el mismo id.
 void insertarViaje(const string& id, const string& nave_id, const string& origen_id, const string& destino_id, const string& fecha) {
     if (buscarViaje(id) != nullptr) {
-        cout << "Aviso: el viaje con id '" << id << "' ya estaba registrado. No se duplico." << endl;
+        cout << "El viaje con id '" << id << "' ya estaba registrado. No se duplico." << endl;
         return;
     }
     if (buscarNave(nave_id) == nullptr) {
-        cout << "Aviso: el viaje '" << id << "' referencia una nave ('" << nave_id << "') que no existe." << endl;
+        cout << "El viaje '" << id << "' referencia una nave ('" << nave_id << "') que no existe." << endl;
     }
     if (buscarVertice(origen_id) == nullptr || buscarVertice(destino_id) == nullptr) {
-        cout << "Aviso: el viaje '" << id << "' referencia una galaxia de origen o destino que no existe." << endl;
+        cout << "El viaje '" << id << "' referencia una galaxia de origen o destino que no existe." << endl;
     }
  
     Viaje* nuevo = new Viaje;
@@ -389,8 +392,9 @@ void insertarViaje(const string& id, const string& nave_id, const string& origen
 
 // Funcion: cargarViajes
 // Descripcion: Consulta el endpoint /historial, parsea el JSON y llama a insertarViaje por cada viaje.
+
 void cargarViajes() {
-    cout << "Cargando historial de viajes." << endl;
+    cout << "Cargando historial de viajes" << endl;
     string texto = consultarAPI("https://galaxias-mock-api.onrender.com/historial");
     if (texto.empty()) {
         cout << "Error: No se recibio historial." << endl;
@@ -404,9 +408,14 @@ void cargarViajes() {
     }
  
     for (auto& item : datos) {
-        insertarViaje( item["id"], item["nave_id"], item["origen_id"], item["destino_id"], item["fecha"] );
+        string idViaje = item["id"].is_null() ? "" : string(item["id"]);
+        string naveId = item["nave_id"].is_null() ? "" : string(item["nave_id"]);
+        string origenId = item["origen_id"].is_null() ? "" : string(item["origen_id"]);
+        string destinoId = item["destino_id"].is_null() ? "" : string(item["destino_id"]);
+        string fecha = item["fecha"].is_null() ? "" : string(item["fecha"]);
+        insertarViaje(idViaje, naveId, origenId, destinoId, fecha);
     }
-    cout << "Historial cargado correctamente." << endl;
+    cout << "Historial cargado correctamente" << endl;
 }
  
 
@@ -418,16 +427,16 @@ void cargarDatosIniciales() {
     cargarRutas();
     cargarNaves();
     cargarViajes();
-    cout << " Datos cargados exitosamente. " << endl;
+    cout << " Datos cargados exitosamente" << endl;
 }
 
 //Representacion del Grafo
 
-
 // Funcion: mostrarGrafo
-// Recorre la lista enlazada de galaxias (grafo) y, para cada una, recorre su
+// Recorre la lista enlazada de galaxias (grafo) y para cada una recorre su
 // sublista de arcos (subListaArcos) mostrando las rutas que salen de ella.
 // Sirve para comprobar que la lista de adyacencia quedo bien construida.
+
 void mostrarGrafo() {
     if (grafo == nullptr) {
         cout << "El grafo esta vacio. No hay galaxias cargadas." << endl;
@@ -437,48 +446,42 @@ void mostrarGrafo() {
     Vertice* actual = grafo;
     while (actual != nullptr) {
         cout << "\nGalaxia: " << actual->nombre << " (codigo: " << actual->codigo << ", id: " << actual->id << ")" << endl;
-        cout << "  Tipo: " << actual->tipo << " | Coordenadas: (" << actual->x << ", " << actual->y << ", " << actual->z << ")" << endl;
+        cout << " Tipo: " << actual->tipo << " Coordenadas: (" << actual->x << ", " << actual->y << ", " << actual->z << ")" << endl;
 
         if (actual->subListaArcos == nullptr) {
-            cout << "  No tiene rutas salientes registradas." << endl;
+            cout << " No tiene rutas salientes registradas." << endl;
         } else {
-            cout << "  Rutas salientes:" << endl;
+            cout << " Rutas salientes:" << endl;
             Arco* arco = actual->subListaArcos;
             while (arco != nullptr) {
                 Vertice* destino = buscarVertice(arco->destino_id);
                 string nombreDestino = (destino != nullptr) ? destino->nombre : "desconocido";
 
-                cout << "    -> " << nombreDestino << " (" << arco->destino_id << ")"
-                     << " | tipo: " << arco->tipo
-                     << " | costo: " << arco->costo
-                     << " | tiempo: " << arco->tiempo_dias << " dias"
-                     << " | activa: " << (arco->activa ? "si" : "no") << endl;
-
+                cout << " -> " << nombreDestino << " (" << arco->destino_id << ")"
+                     << " tipo: " << arco->tipo
+                     << " costo: " << arco->costo
+                     << " tiempo: " << arco->tiempo_dias << " dias"
+                     << " activa: " << (arco->activa ? "si" : "no") << endl;
                 arco = arco->sigA;
             }
         }
-
         actual = actual->sigV;
+
     }
 }
 
-//Kruskal Modificado
+//Kruskal 
 
 
-// Funcion: insertarAristaKruskal
-// Agrega una arista (origen, destino, costo) al inicio de la lista enlazada indicada.
-// Se reutiliza tanto para la lista que llega de la API como para el arbol resultante.
-void insertarAristaKruskal(AristaKruskal*& lista, const string& origen_id, const string& destino_id, float costo) {
-    AristaKruskal* nueva = new AristaKruskal(origen_id, destino_id, costo);
-    nueva->siguiente = lista;
-    lista = nueva;
-}
+// Funcion: kruskal
+// Consulta el endpoint /grafo/kruskal que ya trae las aristas en orden aleatorio y construye el arbol de expansion.
 
-// Funcion: cargarAristasKruskal
-// Consulta el endpoint /grafo/kruskal, que ya entrega las aristas en orden aleatorio,
-// y las guarda en la lista enlazada aristasKruskal sin ordenarlas (asi lo pide el enunciado).
-void cargarAristasKruskal() {
-    cout << "Cargando aristas para Kruskal." << endl;
+void kruskal() {
+    if (grafo == nullptr) {
+        cout << "No hay galaxias cargadas. Carga el grafo primero." << endl;
+        return;
+    }
+
     string texto = consultarAPI("https://galaxias-mock-api.onrender.com/grafo/kruskal");
     if (texto.empty()) {
         cout << "Error: No se recibieron aristas para Kruskal." << endl;
@@ -491,102 +494,271 @@ void cargarAristasKruskal() {
         return;
     }
 
-    for (auto& item : datos) {
-        insertarAristaKruskal(aristasKruskal, item["origen_id"], item["destino_id"], item["costo"]);
-    }
-    cout << "Aristas de Kruskal cargadas correctamente." << endl;
-}
+    // Paso 1: Cargar aristas en vector 
 
-// Funcion: kruskalModificado
-// Recorre las aristas en el orden en que llegaron (aleatorio, sin ordenar por peso) y
-// va agregando al arbol resultante solo las que no generan ciclos, usando EncontrarUnion
-// para saber si dos galaxias ya estan en el mismo conjunto/componente.
-void kruskalModificado() {
-    if (grafo == nullptr) {
-        cout << "No hay galaxias cargadas. Carga el grafo antes de ejecutar Kruskal." << endl;
-        return;
-    }
-    if (aristasKruskal == nullptr) {
-        cout << "No hay aristas cargadas para Kruskal. Carga las aristas antes de continuar." << endl;
-        return;
+    vector<AristaKruskal> aristas;
+    for (auto& item : datos["aristas"]) {
+        aristas.emplace_back(string(item["origen_id"]), string(item["destino_id"]), float(item["costo"]));
     }
 
-    // Si ya existia un arbol de una corrida anterior, se libera antes de recalcular.
-    while (arbolKruskal != nullptr) {
-        AristaKruskal* temp = arbolKruskal;
-        arbolKruskal = arbolKruskal->siguiente;
-        delete temp;
-    }
+    // Paso 2: Crear conjuntos, uno por galaxia
 
-    EncontrarUnion conjuntos;
+    EncontrarUnion eu;
     for (Vertice* v = grafo; v != nullptr; v = v->sigV) {
-        conjuntos.hacerConjunto(v->id);
+        eu.hacerConjunto(v->id);
     }
 
-    AristaKruskal* actual = aristasKruskal;
-    while (actual != nullptr) {
-        if (conjuntos.encontrar(actual->origen_id) != conjuntos.encontrar(actual->destino_id)) {
-            insertarAristaKruskal(arbolKruskal, actual->origen_id, actual->destino_id, actual->costo);
-            conjuntos.unir(actual->origen_id, actual->destino_id);
+    // Paso 3: Procesar aristas en el orden aleatorio que vienen
+
+    vector<AristaKruskal> mst;
+    float pesoTotal = 0;
+    for (int i = 0; i < aristas.size(); i++) {
+        string raizOrigen  = eu.encontrar(aristas[i].origen_id);
+        string raizDestino = eu.encontrar(aristas[i].destino_id);
+
+        if (raizOrigen != raizDestino) {
+            mst.push_back(aristas[i]);
+            pesoTotal += aristas[i].costo;
+            eu.unir(aristas[i].origen_id, aristas[i].destino_id);
         }
-        actual = actual->siguiente;
     }
 
-    cout << "Arbol de expansion (Kruskal modificado) generado correctamente." << endl;
+    // Paso 4: Mostrar resultados
+
+    cout << "\nArbol de expansion:" << endl;
+    for (int i = 0; i < mst.size(); i++) {
+        Vertice* origen = buscarVertice(mst[i].origen_id);
+        Vertice* destino = buscarVertice(mst[i].destino_id);
+        string nOrigen = (origen != nullptr) ? origen->nombre : mst[i].origen_id;
+        string nDestino = (destino != nullptr) ? destino->nombre : mst[i].destino_id;
+        cout << nOrigen << nDestino << ": " << mst[i].costo << endl;
+    }
+    cout << "Costo total del arbol: " << pesoTotal << endl;
+}
+//Archivos
+
+// Funcion: crearArchivo
+// Crea un archivo de texto vacio con el nombre indicado.
+
+void crearArchivo(string nombreArchivo) {
+    ofstream archivo(nombreArchivo);
+    if (archivo.is_open()) {
+        cout << "Archivo '" << nombreArchivo << "' creado exitosamente." << endl;
+        archivo.close();
+    } else {
+        cout << "Error al crear el archivo" << endl;
+    }
 }
 
-// Funcion: mostrarArbolKruskal
-// Muestra las aristas que forman el arbol de expansion resultante de kruskalModificado,junto con el costo total de la red galactica optimizada.
-void mostrarArbolKruskal() {
-    if (arbolKruskal == nullptr) {
-        cout << "Aun no se ha generado el arbol de Kruskal. Ejecuta esa opcion primero." << endl;
-        return;
-    }
+// Funcion: escribirEnArchivo
+// Agrega una linea de texto al final del archivo indicado.
 
-    cout << "\nArbol de conexionesKruskal modificado):" << endl;
-    float costoTotal = 0;
-    AristaKruskal* actual = arbolKruskal;
-    while (actual != nullptr) {
-        Vertice* origen = buscarVertice(actual->origen_id);
-        Vertice* destino = buscarVertice(actual->destino_id);
-        string nombreOrigen = (origen != nullptr) ? origen->nombre : actual->origen_id;
-        string nombreDestino = (destino != nullptr) ? destino->nombre : actual->destino_id;
-
-        cout << "  " << nombreOrigen << " -- " << nombreDestino << "  (costo: " << actual->costo << ")" << endl;
-        costoTotal += actual->costo;
-        actual = actual->siguiente;
+void escribirEnArchivo(string nombreArchivo, string datos) {
+    ofstream archivo(nombreArchivo, ios::app);
+    if (archivo.is_open()) {
+        archivo << datos << endl;
+        archivo.close();
+    } else {
+        cout << "Error al abrir el archivo para escritura." << endl;
     }
-    cout << "Costo total del arbol: " << costoTotal << endl;
 }
+
+// Funcion: leerArchivo
+// Lee y muestra en pantalla el contenido de un archivo de texto.
+
+void leerArchivo(string nombreArchivo) {
+    ifstream archivo(nombreArchivo);
+    if (archivo.is_open()) {
+        string linea;
+        cout << "Contenido de '" << nombreArchivo << "':" << endl;
+        while (getline(archivo, linea)) {
+            cout << linea << endl;
+        }
+        archivo.close();
+    } else {
+        cout << "Error al abrir el archivo para lectura." << endl;
+    }
+}
+
 
 //Menu
+
+// Funcion: menuGalaxias
+// Submenu para ver galaxias y el grafo completo.
+
+void menuGalaxias() {
+    int opcion;
+    do {
+        cout << "\nGalaxias" << endl;
+        cout << "1. Ver todas las galaxias" << endl;
+        cout << "2. Ver grafo completo" << endl;
+        cout << "0. Volver" << endl;
+        cout << "Seleccione una opcion: ";
+        cin >> opcion;
+
+        switch(opcion) {
+            case 1: mostrarGrafo(); break;
+            case 2: mostrarGrafo(); break;
+            case 0: break;
+            default: cout << "Opcion invalida" << endl;
+        }
+    } while(opcion != 0);
+}
+
+// Funcion: menuNaves
+// Submenu para ver naves registradas.
+
+void menuNaves() {
+    int opcion;
+    do {
+        cout << "\nNaves" << endl;
+        cout << "1. Ver todas las naves" << endl;
+        cout << "0. Volver" << endl;
+        cout << "Seleccione una opcion: ";
+        cin >> opcion;
+
+        switch(opcion) {
+            case 1: {
+                if (naves == nullptr) {
+                    cout << "No hay naves registradas." << endl;
+                } else {
+                    Nave* actual = naves;
+                    cout << "\n Naves registradas" << endl;
+                    while (actual != nullptr) {
+                        cout << "ID: " << actual->id
+                             << " Codigo: " << actual->codigo
+                             << " Nombre: " << actual->nombre
+                             << " Capacidad: " << actual->capacidad
+                             << " Vel Max: " << actual->velocidad_max
+                             << " Activa: " << (actual->activa ? "si" : "no") << endl;
+                        actual = actual->sigN;
+                    }
+                }
+                break;
+            }
+            case 0: break;
+            default: cout << "Opcion invalida" << endl;
+        }
+    } while(opcion != 0);
+}
+
+// Funcion: menuRutas
+// Submenu para ver rutas desde una galaxia especifica.
+
+void menuRutas() {
+    int opcion;
+    do {
+        cout << "\nRutas" << endl;
+        cout << "1. Ver rutas desde una galaxia" << endl;
+        cout << "0. Volver" << endl;
+        cout << "Seleccione una opcion: ";
+        cin >> opcion;
+
+        switch(opcion) {
+            case 1: {
+                string id;
+                cout << "Ingrese el ID de la galaxia (ej: galaxia-1): ";
+                cin >> id;
+                Vertice* origen = buscarVertice(id);
+                if (origen == nullptr) {
+                    cout << "Galaxia no encontrada." << endl;
+                } else if (origen->subListaArcos == nullptr) {
+                    cout << "La galaxia " << origen->nombre << " no tiene rutas registradas." << endl;
+                } else {
+                    cout << "\n Rutas desde: " << origen->nombre << endl;
+                    Arco* arco = origen->subListaArcos;
+                    while (arco != nullptr) {
+                        Vertice* destino = buscarVertice(arco->destino_id);
+                        string nombreDestino = (destino != nullptr) ? destino->nombre : arco->destino_id;
+                        cout << "-> " << nombreDestino
+                             << " tipo: " << arco->tipo
+                             << " costo: " << arco->costo
+                             << " dias: " << arco->tiempo_dias
+                             << " activa: " << (arco->activa ? "si" : "no") << endl;
+                        arco = arco->sigA;
+                    }
+                }
+                break;
+            }
+            case 0: break;
+            default: cout << "Opcion invalida" << endl;
+        }
+    } while(opcion != 0);
+}
+
+// Funcion: menuHistorial
+// Submenu para consultar el historial de viajes de una nave.
+
+void menuHistorial() {
+    int opcion;
+    do {
+        cout << "\n Historial de Viajes" << endl;
+        cout << "1. Ver historial de una nave" << endl;
+        cout << "0. Volver" << endl;
+        cout << "Seleccione una opcion: ";
+        cin >> opcion;
+
+        switch(opcion) {
+            case 1: {
+                string id;
+                cout << "Ingrese el ID de la nave (ej: nave-1): ";
+                cin >> id;
+                Nave* nave = buscarNave(id);
+                if (nave == nullptr) {
+                    cout << "Nave no encontrada." << endl;
+                } else {
+                    cout << "\nHistorial de: " << nave->nombre << endl;
+                    bool encontrado = false;
+                    Viaje* actual = viajes;
+                    while (actual != nullptr) {
+                        if (actual->nave_id == id) {
+                            Vertice* origen = buscarVertice(actual->origen_id);
+                            Vertice* destino = buscarVertice(actual->destino_id);
+                            string nOrigen = (origen != nullptr) ? origen->nombre : actual->origen_id;
+                            string nDestino = (destino != nullptr) ? destino->nombre : actual->destino_id;
+                            cout << "Viaje: " << actual->id
+                                 << " De: " << nOrigen
+                                 << " -> " << nDestino
+                                 << " Fecha: " << actual->fecha << endl;
+                            encontrado = true;
+                        }
+                        actual = actual->sigVj;
+                    }
+                    if (!encontrado) cout << "Esta nave no tiene viajes registrados" << endl;
+                }
+                break;
+            }
+            case 0: break;
+            default: cout << "Opcion invalida" << endl;
+        }
+    } while(opcion != 0);
+}
+
+
+
+
 int main() {
     int opcion;
     cargarDatosIniciales();
-
     do {
-        cout << "\n===== GUARDIANES DE LA GALAXIA =====" << endl;
+        cout << "\nGestion del Sistema" << endl;
         cout << "1. Galaxias" << endl;
-        cout << "2. Navaes" << endl;
+        cout << "2. Naves" << endl;
         cout << "3. Rutas" << endl;
-        cout << "4. Historial de viajes"<< endl;
-        cout << "5. Consultas" << endl;
-        cout << "6. Reportes" << endl;
+        cout << "4. Historial de viajes" << endl;
         cout << "0. Salir" << endl;
         cout << "Seleccione una opcion: ";
         cin >> opcion;
 
         switch(opcion) {
-            case 1: cout << "Modulo Galaxias" << endl; break;
-            case 2: cout << "Modulo Naves" << endl; break;
-            case 3: cout << "Modulo Rutas" << endl; break;
-            case 4: cout << "Modulo Historial" << endl; break;
-            case 5: cout << "Modulo Consultas" << endl; break;
-            case 6: cout << "Modulo Reportes" << endl; break;
-            case 0: cout << "Hasta luego!" << endl; break;
+            case 1: menuGalaxias(); break;
+            case 2: menuNaves(); break;
+            case 3: menuRutas(); break;
+            case 4: menuHistorial(); break;
+
+            case 0: cout << "Hasta pronto" << endl; break;
             default: cout << "Opcion invalida" << endl;
         }
-
     } while(opcion != 0);
 
     return 0;
