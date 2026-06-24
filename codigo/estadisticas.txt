@@ -1,6 +1,0 @@
-Estadisticas del sistema:
-Total de galaxias: 12
-Total de rutas: 22
-Total de naves: 10
-Total de viajes: 25
-Galaxia mas conectada: Tellurium Galaxy (2 rutas)

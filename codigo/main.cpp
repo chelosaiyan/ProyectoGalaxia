@@ -104,9 +104,37 @@ struct EncontrarUnion {
 };
 
 //Variables globales.
-Vertice* grafo = nullptr; // lista enlazada de galaxias (vertices del grafo)
-Nave* naves = nullptr; // lista enlazada de naves
-Viaje* viajes = nullptr; // lista enlazada de viajes
+Vertice* grafo = NULL; // lista enlazada de galaxias (vertices del grafo)
+Nave* naves = NULL; // lista enlazada de naves
+Viaje* viajes = NULL; // lista enlazada de viajes
+
+// Prototipos de funciones
+size_t escribirRespuesta(void* contenido, size_t tam, size_t n, string* salida);
+string consultarAPI(const string& url);
+Vertice* buscarVertice(const string& id);
+Vertice* buscarVerticePorCodigo(const string& codigo);
+void insertarVertice(const string& id, const string& codigo, const string& nombre, const string& tipo, float x, float y, float z, const string& descripcion);
+void cargarGalaxias();
+void insertarArco(const string& origen_id, const string& id, const string& destino_id, const string& tipo, float costo, float tiempo_dias, bool activa);
+void cargarRutas();
+Nave* buscarNave(const string& id);
+Nave* buscarNavePorCodigo(const string& codigo);
+void insertarNave(const string& id, const string& codigo, const string& nombre, int capacidad, int velocidad_max, bool activa);
+void cargarNaves();
+Viaje* buscarViaje(const string& id);
+void insertarViaje(const string& id, const string& nave_id, const string& origen_id, const string& destino_id, const string& fecha);
+void cargarViajes();
+void cargarDatosIniciales();
+void mostrarGrafo();
+void kruskal(Vertice* grafo);
+void crearArchivo(string nombreArchivo);
+void escribirEnArchivo(string nombreArchivo, string datos);
+void leerArchivo(string nombreArchivo);
+void menuGalaxias();
+void menuNaves();
+void menuRutas();
+void menuHistorial();
+void menuConsultas();
 
 //API y JSON
 
@@ -153,22 +181,22 @@ string consultarAPI(const string& url) {
 // Busca una galaxia en el grafo por su id. Retorna nullptr si no se encuentra.
 Vertice* buscarVertice(const string& id) {
     Vertice* actual = grafo;
-    while (actual != nullptr) {
+    while (actual != NULL) {
         if (actual->id == id) return actual;
         actual = actual->sigV;
     }
-    return nullptr;
+    return NULL;
 }
  
 // Funcion: buscarVerticePorCodigo
 // Busca una galaxia en el grafo por su codigo. Retorna nullptr si no se encuentra.
 Vertice* buscarVerticePorCodigo(const string& codigo) {
     Vertice* actual = grafo;
-    while (actual != nullptr) {
+    while (actual != NULL) {
         if (actual->codigo == codigo) return actual;
         actual = actual->sigV;
     }
-    return nullptr;
+    return NULL;
 }
  
 // Funcion: insertarVertice
@@ -176,11 +204,11 @@ Vertice* buscarVerticePorCodigo(const string& codigo) {
 // Valida que no exista ya otra galaxia con el mismo id o el mismo codigo.
 
 void insertarVertice(const string& id, const string& codigo, const string& nombre, const string& tipo, float x, float y, float z, const string& descripcion) {
-    if (buscarVertice(id) != nullptr) {
+    if (buscarVertice(id) != NULL) {
         cout << "La galaxia con id '" << id << "' ya estaba registrada. No se duplico." << endl;
         return;
     }
-    if (buscarVerticePorCodigo(codigo) != nullptr) {
+    if (buscarVerticePorCodigo(codigo) != NULL) {
         cout << "La galaxia con codigo '" << codigo << "' ya estaba registrada. No se duplico." << endl;
         return;
     }
@@ -194,7 +222,7 @@ void insertarVertice(const string& id, const string& codigo, const string& nombr
     nuevo->y = y;
     nuevo->z = z;
     nuevo->descripcion = descripcion;
-    nuevo->subListaArcos = nullptr;
+    nuevo->subListaArcos = NULL;
     nuevo->sigV = grafo;
     grafo = nuevo;
 }
@@ -229,13 +257,13 @@ void cargarGalaxias() {
 
 void insertarArco(const string& origen_id, const string& id, const string& destino_id, const string& tipo, float costo, float tiempo_dias, bool activa) {
     Vertice* origen = buscarVertice(origen_id);
-    if (origen == nullptr) {
+    if (origen == NULL) {
         cout << "Error: no existe la galaxia origen con id '" << origen_id << "'. No se pudo registrar la ruta '" << id << endl;
         return;
     }
  
     Arco* recorre = origen->subListaArcos;
-    while (recorre != nullptr) {
+    while (recorre != NULL) {
         if (recorre->id == id) {
             cout << "La ruta con id '" << id << "' ya estaba registrada. No se duplico." << endl;
             return;
@@ -243,7 +271,7 @@ void insertarArco(const string& origen_id, const string& id, const string& desti
         recorre = recorre->sigA;
     }
  
-    if (buscarVertice(destino_id) == nullptr) {
+    if (buscarVertice(destino_id) == NULL) {
         cout << "La ruta '" << id << "' apunta a un destino ('" << destino_id << "') que no existe en el grafo." << endl;
     }
  
@@ -287,33 +315,33 @@ void cargarRutas() {
 // Busca una nave en la lista por su id. Retorna nullptr si no se encuentra.
 Nave* buscarNave(const string& id) {
     Nave* actual = naves;
-    while (actual != nullptr) {
+    while (actual != NULL) {
         if (actual->id == id) return actual;
         actual = actual->sigN;
     }
-    return nullptr;
+    return NULL;
 }
  
 // Funcion: buscarNavePorCodigo
 // Busca una nave en la lista por su codigo. Retorna nullptr si no se encuentra.
 Nave* buscarNavePorCodigo(const string& codigo) {
     Nave* actual = naves;
-    while (actual != nullptr) {
+    while (actual != NULL) {
         if (actual->codigo == codigo) return actual;
         actual = actual->sigN;
     }
-    return nullptr;
+    return NULL;
 }
  
 // Funcion: insertarNave
 // Crea una nueva nave y la agrega al inicio de la lista enlazada de naves.
 // Valida que no exista ya otra nave con el mismo id o el mismo codigo.
 void insertarNave(const string& id, const string& codigo, const string& nombre, int capacidad, int velocidad_max, bool activa) {
-    if (buscarNave(id) != nullptr) {
+    if (buscarNave(id) != NULL) {
         cout << "La nave con id '" << id << "' ya estaba registrada. No se duplico." << endl;
         return;
     }
-    if (buscarNavePorCodigo(codigo) != nullptr) {
+    if (buscarNavePorCodigo(codigo) != NULL) {
         cout << "La nave con codigo '" << codigo << "' ya estaba registrada. No se duplico." << endl;
         return;
     }
@@ -358,25 +386,25 @@ void cargarNaves() {
 
 Viaje* buscarViaje(const string& id) {
     Viaje* actual = viajes;
-    while (actual != nullptr) {
+    while (actual != NULL) {
         if (actual->id == id) return actual;
         actual = actual->sigVj;
     }
-    return nullptr;
+    return NULL;
 }
  
 // Funcion: insertarViaje
 // Crea un nuevo viaje y lo agrega al inicio de la lista enlazada del historial.
 // Valida que no exista ya un viaje con el mismo id.
 void insertarViaje(const string& id, const string& nave_id, const string& origen_id, const string& destino_id, const string& fecha) {
-    if (buscarViaje(id) != nullptr) {
+    if (buscarViaje(id) != NULL) {
         cout << "El viaje con id '" << id << "' ya estaba registrado. No se duplico." << endl;
         return;
     }
-    if (buscarNave(nave_id) == nullptr) {
+    if (buscarNave(nave_id) == NULL) {
         cout << "El viaje '" << id << "' referencia una nave ('" << nave_id << "') que no existe." << endl;
     }
-    if (buscarVertice(origen_id) == nullptr || buscarVertice(destino_id) == nullptr) {
+    if (buscarVertice(origen_id) == NULL || buscarVertice(destino_id) == NULL) {
         cout << "El viaje '" << id << "' referencia una galaxia de origen o destino que no existe." << endl;
     }
  
@@ -438,24 +466,24 @@ void cargarDatosIniciales() {
 // Sirve para comprobar que la lista de adyacencia quedo bien construida.
 
 void mostrarGrafo() {
-    if (grafo == nullptr) {
+    if (grafo == NULL) {
         cout << "El grafo esta vacio. No hay galaxias cargadas." << endl;
         return;
     }
 
     Vertice* actual = grafo;
-    while (actual != nullptr) {
+    while (actual != NULL) {
         cout << "\nGalaxia: " << actual->nombre << " (codigo: " << actual->codigo << ", id: " << actual->id << ")" << endl;
         cout << " Tipo: " << actual->tipo << " Coordenadas: (" << actual->x << ", " << actual->y << ", " << actual->z << ")" << endl;
 
-        if (actual->subListaArcos == nullptr) {
+        if (actual->subListaArcos == NULL) {
             cout << " No tiene rutas salientes registradas." << endl;
         } else {
             cout << " Rutas salientes:" << endl;
             Arco* arco = actual->subListaArcos;
-            while (arco != nullptr) {
+            while (arco != NULL) {
                 Vertice* destino = buscarVertice(arco->destino_id);
-                string nombreDestino = (destino != nullptr) ? destino->nombre : "desconocido";
+                string nombreDestino = (destino != NULL) ? destino->nombre : "desconocido";
 
                 cout << " -> " << nombreDestino << " (" << arco->destino_id << ")"
                      << " tipo: " << arco->tipo
@@ -476,8 +504,8 @@ void mostrarGrafo() {
 // Funcion: kruskal
 // Consulta el endpoint /grafo/kruskal que ya trae las aristas en orden aleatorio y construye el arbol de expansion.
 
-void kruskal() {
-    if (grafo == nullptr) {
+void kruskal(Vertice* grafo) {
+    if (grafo == NULL) {
         cout << "No hay galaxias cargadas. Carga el grafo primero." << endl;
         return;
     }
@@ -504,7 +532,7 @@ void kruskal() {
     // Paso 2: Crear conjuntos, uno por galaxia
 
     EncontrarUnion eu;
-    for (Vertice* v = grafo; v != nullptr; v = v->sigV) {
+    for (Vertice* v = grafo; v != NULL; v = v->sigV) {
         eu.hacerConjunto(v->id);
     }
 
@@ -512,26 +540,26 @@ void kruskal() {
 
     vector<AristaKruskal> mst;
     float pesoTotal = 0;
-    for (int i = 0; i < aristas.size(); i++) {
-        string raizOrigen  = eu.encontrar(aristas[i].origen_id);
-        string raizDestino = eu.encontrar(aristas[i].destino_id);
+    for (const auto& arista : aristas) {
+        string raizOrigen = eu.encontrar(arista.origen_id);
+        string raizDestino = eu.encontrar(arista.destino_id);
 
         if (raizOrigen != raizDestino) {
-            mst.push_back(aristas[i]);
-            pesoTotal += aristas[i].costo;
-            eu.unir(aristas[i].origen_id, aristas[i].destino_id);
+            mst.push_back(arista);
+            pesoTotal += arista.costo;
+            eu.unir(arista.origen_id, arista.destino_id);
         }
     }
 
     // Paso 4: Mostrar resultados
 
     cout << "\nArbol de expansion:" << endl;
-    for (int i = 0; i < mst.size(); i++) {
-        Vertice* origen = buscarVertice(mst[i].origen_id);
-        Vertice* destino = buscarVertice(mst[i].destino_id);
-        string nOrigen = (origen != nullptr) ? origen->nombre : mst[i].origen_id;
-        string nDestino = (destino != nullptr) ? destino->nombre : mst[i].destino_id;
-        cout << nOrigen << nDestino << ": " << mst[i].costo << endl;
+    for (const auto& arista : mst) {
+        Vertice* origen = buscarVertice(arista.origen_id);
+        Vertice* destino = buscarVertice(arista.destino_id);
+        string nOrigen = (origen != NULL) ? origen->nombre : arista.origen_id;
+        string nDestino = (destino != NULL) ? destino->nombre : arista.destino_id;
+        cout << nOrigen << " -> " << nDestino << ": " << arista.costo << endl;
     }
     cout << "Costo total del arbol: " << pesoTotal << endl;
 }
@@ -619,12 +647,12 @@ void menuNaves() {
 
         switch(opcion) {
             case 1: {
-                if (naves == nullptr) {
+                if (naves == NULL) {
                     cout << "No hay naves registradas." << endl;
                 } else {
                     Nave* actual = naves;
                     cout << "\n Naves registradas" << endl;
-                    while (actual != nullptr) {
+                    while (actual != NULL) {
                         cout << "ID: " << actual->id
                              << " Codigo: " << actual->codigo
                              << " Nombre: " << actual->nombre
@@ -660,16 +688,16 @@ void menuRutas() {
                 cout << "Ingrese el ID de la galaxia (ej: galaxia-1): ";
                 cin >> id;
                 Vertice* origen = buscarVertice(id);
-                if (origen == nullptr) {
+                if (origen == NULL) {
                     cout << "Galaxia no encontrada." << endl;
-                } else if (origen->subListaArcos == nullptr) {
+                } else if (origen->subListaArcos == NULL) {
                     cout << "La galaxia " << origen->nombre << " no tiene rutas registradas." << endl;
                 } else {
                     cout << "\n Rutas desde: " << origen->nombre << endl;
                     Arco* arco = origen->subListaArcos;
-                    while (arco != nullptr) {
+                    while (arco != NULL) {
                         Vertice* destino = buscarVertice(arco->destino_id);
-                        string nombreDestino = (destino != nullptr) ? destino->nombre : arco->destino_id;
+                        string nombreDestino = (destino != NULL) ? destino->nombre : arco->destino_id;
                         cout << "-> " << nombreDestino
                              << " tipo: " << arco->tipo
                              << " costo: " << arco->costo
@@ -704,18 +732,18 @@ void menuHistorial() {
                 cout << "Ingrese el ID de la nave (ej: nave-1): ";
                 cin >> id;
                 Nave* nave = buscarNave(id);
-                if (nave == nullptr) {
+                if (nave == NULL) {
                     cout << "Nave no encontrada." << endl;
                 } else {
                     cout << "\nHistorial de: " << nave->nombre << endl;
                     bool encontrado = false;
                     Viaje* actual = viajes;
-                    while (actual != nullptr) {
+                    while (actual != NULL) {
                         if (actual->nave_id == id) {
                             Vertice* origen = buscarVertice(actual->origen_id);
                             Vertice* destino = buscarVertice(actual->destino_id);
-                            string nOrigen = (origen != nullptr) ? origen->nombre : actual->origen_id;
-                            string nDestino = (destino != nullptr) ? destino->nombre : actual->destino_id;
+                            string nOrigen = (origen != NULL) ? origen->nombre : actual->origen_id;
+                            string nDestino = (destino != NULL) ? destino->nombre : actual->destino_id;
                             cout << "Viaje: " << actual->id
                                  << " De: " << nOrigen
                                  << " -> " << nDestino
@@ -736,6 +764,26 @@ void menuHistorial() {
 
 
 
+// Funcion: menuConsultas
+// Submenu para consultas del sistema.
+void menuConsultas() {
+    int opcion;
+    do {
+        cout << "\nConsultas" << endl;
+        cout << "1. Mostrar arbol de expansion (Kruskal)" << endl;
+        cout << "2. Ruta de menor costo entre dos galaxias" << endl;
+        cout << "0. Volver" << endl;
+        cout << "Seleccione una opcion: ";
+        cin >> opcion;
+
+        switch(opcion) {
+            case 1: kruskal(grafo); break;
+            case 2: cout << "En desarrollo." << endl; break;
+            case 0: break;
+            default: cout << "Opcion invalida" << endl;
+        }
+    } while(opcion != 0);
+}
 
 int main() {
     int opcion;
@@ -746,6 +794,7 @@ int main() {
         cout << "2. Naves" << endl;
         cout << "3. Rutas" << endl;
         cout << "4. Historial de viajes" << endl;
+        cout << "5. Consultas" << endl;
         cout << "0. Salir" << endl;
         cout << "Seleccione una opcion: ";
         cin >> opcion;
@@ -755,7 +804,7 @@ int main() {
             case 2: menuNaves(); break;
             case 3: menuRutas(); break;
             case 4: menuHistorial(); break;
-
+            case 5: menuConsultas(); break;
             case 0: cout << "Hasta pronto" << endl; break;
             default: cout << "Opcion invalida" << endl;
         }

@@ -1,1 +1,0 @@
-Arbol de expansion de Kruskal:
