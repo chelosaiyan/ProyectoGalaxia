@@ -500,7 +500,6 @@ void mostrarGrafo() {
 
 //Kruskal 
 
-
 // Funcion: kruskal
 // Consulta el endpoint /grafo/kruskal que ya trae las aristas en orden aleatorio y construye el arbol de expansion.
 
@@ -562,7 +561,21 @@ void kruskal(Vertice* grafo) {
         cout << nOrigen << " -> " << nDestino << ": " << arista.costo << endl;
     }
     cout << "Costo total del arbol: " << pesoTotal << endl;
+
+    // Paso 5: Guardar resultados en archivo
+
+    crearArchivo("kruskal.txt");
+    for (const auto& arista : mst) {
+        Vertice* origen = buscarVertice(arista.origen_id);
+        Vertice* destino = buscarVertice(arista.destino_id);
+        string nOrigen = (origen != NULL) ? origen->nombre : arista.origen_id;
+        string nDestino = (destino != NULL) ? destino->nombre : arista.destino_id;
+        escribirEnArchivo("kruskal.txt", nOrigen + " -> " + nDestino + ": " + to_string(arista.costo));
+    }
+    escribirEnArchivo("kruskal.txt", "Costo total del arbol: " + to_string(pesoTotal));
+    cout << "Resultados guardados en kruskal.txt" << endl;
 }
+
 //Archivos
 
 // Funcion: crearArchivo
@@ -772,6 +785,7 @@ void menuConsultas() {
         cout << "\nConsultas" << endl;
         cout << "1. Mostrar arbol de expansion (Kruskal)" << endl;
         cout << "2. Ruta de menor costo entre dos galaxias" << endl;
+        cout << "3. Mostrar rutas desde una galaxia" << endl;
         cout << "0. Volver" << endl;
         cout << "Seleccione una opcion: ";
         cin >> opcion;
@@ -779,6 +793,31 @@ void menuConsultas() {
         switch(opcion) {
             case 1: kruskal(grafo); break;
             case 2: cout << "En desarrollo." << endl; break;
+            case 3: {
+                string id;
+                cout << "Ingrese el ID de la galaxia (ej: galaxia-1): ";
+                cin >> id;
+                Vertice* origen = buscarVertice(id);
+                if (origen == NULL) {
+                    cout << "Galaxia no encontrada." << endl;
+                } else if (origen->subListaArcos == NULL) {
+                    cout << "La galaxia " << origen->nombre << " no tiene rutas registradas." << endl;
+                } else {
+                    cout << "\nRutas desde: " << origen->nombre << endl;
+                    Arco* arco = origen->subListaArcos;
+                    while (arco != NULL) {
+                        Vertice* destino = buscarVertice(arco->destino_id);
+                        string nombreDestino = (destino != NULL) ? destino->nombre : arco->destino_id;
+                        cout << "-> " << nombreDestino
+                             << " tipo: " << arco->tipo
+                             << " costo: " << arco->costo
+                             << " dias: " << arco->tiempo_dias
+                             << " activa: " << (arco->activa ? "si" : "no") << endl;
+                        arco = arco->sigA;
+                    }
+                }
+                break;
+            }
             case 0: break;
             default: cout << "Opcion invalida" << endl;
         }
